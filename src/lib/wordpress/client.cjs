@@ -22,7 +22,7 @@ async function readJson(request, limit = 30 * 1024 * 1024) {
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw Error('Invalid JSON.'); }
 }
 async function wordpress(path, { method='GET', body } = {}, credentials, transport = publicFetch) {
-  if (!/^\/(?:status|pages|deploy|media|identity|homepage)(?:\?.*)?$/.test(path)) throw Error('Unsupported bridge operation.');
+  if (!/^\/(?:status|pages|sites|site\/create|site\/[a-z0-9-]+|deploy|media|identity|homepage|admin\/plugin\/install|admin\/theme\/install|admin\/activate)(?:\?.*)?$/.test(path)) throw Error('Unsupported bridge operation.');
   const config = connection(credentials);
   const response = await transport(`${config.url}/wp-json/wcs/v1${path}`, {method,headers:{Authorization:config.authorization,'Content-Type':'application/json'},body:body ? JSON.stringify(body) : undefined,redirect:'error',signal:AbortSignal.timeout(120000),cache:'no-store'});
   const text = await response.text(); let result;

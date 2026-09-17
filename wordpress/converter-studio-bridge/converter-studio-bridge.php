@@ -22,6 +22,7 @@ require_once WCS_DIR . 'includes/assets.php';
 require_once WCS_DIR . 'includes/media-jobs.php';
 require_once WCS_DIR . 'includes/links.php';
 require_once WCS_DIR . 'includes/menus.php';
+require_once WCS_DIR . 'includes/multisite.php';
 require_once WCS_DIR . 'includes/deployment.php';
 require_once WCS_DIR . 'includes/rendering.php';
 function wcs_permission() { return current_user_can('manage_options') && current_user_can('unfiltered_html'); }
@@ -33,9 +34,22 @@ add_action('init', function () {
 });
 add_filter('option_elementor_cpt_support', function ($types) { return array_values(array_unique(array_merge((array)$types, array('page','wcs_part')))); });
 add_action('rest_api_init', function () {
-    foreach (array('status' => array('GET','wcs_status'), 'pages' => array('GET','wcs_pages'), 'deploy' => array('POST','wcs_deploy'), 'media' => array('POST','wcs_media_endpoint'), 'identity' => array('POST','wcs_identity_endpoint'), 'homepage' => array('POST','wcs_homepage_endpoint')) as $path => $handler) {
+    foreach (array(
+        'status' => array('GET','wcs_status'),
+        'pages' => array('GET','wcs_pages'),
+        'sites' => array('GET','wcs_sites_endpoint'),
+        'site/create' => array('POST','wcs_create_site_endpoint'),
+        'deploy' => array('POST','wcs_deploy'),
+        'media' => array('POST','wcs_media_endpoint'),
+        'identity' => array('POST','wcs_identity_endpoint'),
+        'homepage' => array('POST','wcs_homepage_endpoint'),
+        'admin/plugin/install' => array('POST','wcs_install_plugin_endpoint'),
+        'admin/theme/install' => array('POST','wcs_install_theme_endpoint'),
+        'admin/activate' => array('POST','wcs_activate_endpoint'),
+    ) as $path => $handler) {
         register_rest_route('wcs/v1', '/' . $path, array('methods'=>$handler[0], 'callback'=>$handler[1], 'permission_callback'=>'wcs_permission'));
     }
+    register_rest_route('wcs/v1', '/site/(?P<siteId>[a-z0-9-]+)', array('methods'=>'DELETE', 'callback'=>'wcs_delete_site_endpoint', 'permission_callback'=>'wcs_permission'));
 });
 function wcs_status() {
     return rest_ensure_response(array('version'=>'1.6.0','name'=>get_bloginfo('name'),'url'=>home_url('/'),'elementor'=>ecb_ready(),'pro'=>defined('ELEMENTOR_PRO_VERSION'),'dom'=>class_exists('DOMDocument')));
