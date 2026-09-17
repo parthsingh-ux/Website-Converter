@@ -4,11 +4,12 @@ import { useAuthGuard } from "@/hooks/useAuthGuard";
 import Loader from "./Loader";
 import Navbar from "./Navbar";
 import Sidebar from "./SideBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Icon } from "@iconify/react";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { useUserContext } from "@/context/UserContext";
+import LoginScreen from "./LoginScreen";
 
 function LayoutContent({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -99,10 +100,20 @@ function LayoutContent({ children }) {
 }
 
 export default function ProtectedLayout({ children }) {
-  // const { loading, allowed } = useAuthGuard();
+  const [authed, setAuthed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // if (loading) return <Loader />;
-  // if (!allowed) return null;
+  useEffect(() => {
+    const isAuthed = typeof window !== "undefined" && localStorage.getItem("wcs_authenticated") === "true";
+    setAuthed(isAuthed);
+    setLoading(false);
+  }, []);
+
+  if (loading) return null;
+
+  if (!authed) {
+    return <LoginScreen onLoginSuccess={() => setAuthed(true)} />;
+  }
 
   return (
     <SidebarProvider>

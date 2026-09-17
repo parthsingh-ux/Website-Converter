@@ -66,8 +66,13 @@ export default function Navbar({ mode = "dark" }) {
 
   const handleLogout = () => {
     logout();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("wcs_authenticated");
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("token");
+    }
     toast.success("Logged out successfully");
-    router.push("/signin");
+    window.location.reload();
   };
   const layoutBgClass = "bg-gray-100";
 
