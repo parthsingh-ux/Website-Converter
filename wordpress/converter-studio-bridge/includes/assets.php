@@ -33,26 +33,41 @@ function wcs_write_asset($file, $bytes) {
     if (file_exists($file) && hash_equals(hash('sha256', $bytes), hash_file('sha256', $file))) {
         return true;
     }
+    $written = @file_put_contents($file, $bytes, LOCK_EX);
+    if ($written === strlen($bytes)) {
+        return true;
+    }
+    $written = @file_put_contents($file, $bytes);
+    if ($written === strlen($bytes)) {
+        return true;
+    }
     if (!function_exists('wp_tempnam')) {
         require_once ABSPATH . 'wp-admin/includes/file.php';
     }
-    $temp = wp_tempnam(basename($file), dirname($file));
-    if (!$temp) {
-        return file_put_contents($file, $bytes, LOCK_EX) === strlen($bytes);
+    $temp = @wp_tempnam(basename($file), dirname($file));
+    if ($temp) {
+        @file_put_contents($temp, $bytes);
+        if (@rename($temp, $file)) {
+            return true;
+        }
+        if (file_exists($temp)) { @wp_delete_file($temp); }
     }
-    $written = file_put_contents($temp, $bytes, LOCK_EX);
-    if (strlen($bytes) !== $written || !rename($temp, $file)) {
-        if (file_exists($temp)) { wp_delete_file($temp); }
-        return file_put_contents($file, $bytes, LOCK_EX) === strlen($bytes);
-    }
-    return true;
+    return false;
 }
 function wcs_register_assets($part, $editor) {
     $elementor=$editor==='elementor';$meta=$part['ecb'] ?? array();
     $id=$elementor?$meta['assetId']:$part['patternScopeId'];$css=$elementor?$meta['css']:$part['patternCss'];$js=$elementor?$meta['js']:$part['patternJs'];
-    $uploads=wp_upload_dir();if($uploads['error'])throw new RuntimeException('WordPress uploads directory is unavailable.');
+    $uploads=wp_upload_dir();if(!empty($uploads['error']))throw new RuntimeException('WordPress uploads directory is unavailable: '.$uploads['error']);
     $dir=trailingslashit($uploads['basedir']).($elementor?'elementor-converter':'gutenberg-converter');
-    if(!wp_mkdir_p($dir) || !wcs_write_asset($dir.'/'.$id.'.css',$css) || (trim($js) && !wcs_write_asset($dir.'/'.$id.'.js',$js)))throw new RuntimeException('Cannot write design assets; check uploads permissions or regenerate a conflicting JSON export.');
+    if(!wp_mkdir_p($dir))throw new RuntimeException('Cannot create directory: '.$dir.'. Check permissions on wp-content/uploads.');
+    if(!wcs_write_asset($dir.'/'.$id.'.css',$css)){
+        $err=error_get_last();$detail=$err?' ('.$err['message'].')':'';
+        throw new RuntimeException('Cannot write CSS asset file at '.$dir.'/'.$id.'.css'.$detail.'. Check file permissions or regenerate export.');
+    }
+    if(trim($js) && !wcs_write_asset($dir.'/'.$id.'.js',$js)){
+        $err=error_get_last();$detail=$err?' ('.$err['message'].')':'';
+        throw new RuntimeException('Cannot write JS asset file at '.$dir.'/'.$id.'.js'.$detail.'. Check file permissions or regenerate export.');
+    }
     $option=$elementor?'ecb_asset_registry':'gcb_asset_registry';$registry=get_option($option,array());$hash=hash('sha256',$css."\0".$js);
     $registry[$id]=$elementor?array('hash'=>$hash,'has_js'=>(bool)trim($js),'images'=>$meta['imageAttributes'] ?? array(),'root_attributes'=>$meta['rootAttributes'] ?? array(),'builtin_assets'=>array_intersect((array)($meta['builtinAssets'] ?? array()),array('lucide'))):array('asset_hash'=>$hash,'has_js'=>(bool)trim($js),'title'=>$part['title'] ?? 'Converted page');
     update_option($option,$registry,false);
