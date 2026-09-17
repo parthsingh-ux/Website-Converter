@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Rebuild the installable WordPress bridge without development files."""
+"""Rebuild the installable WordPress bridge and runtime zip packages."""
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
+
 root = Path(__file__).resolve().parents[1]
 plugin = root / 'wordpress' / 'converter-studio-bridge'
 target = root / 'public' / 'downloads' / 'wordpress-converter-bridge.zip'
@@ -10,4 +11,13 @@ with ZipFile(target, 'w', ZIP_DEFLATED) as archive:
     for path in sorted(plugin.rglob('*')):
         if path.is_file() and not any(part.startswith('.') for part in path.relative_to(plugin).parts):
             archive.write(path, path.relative_to(plugin.parent))
+
+runtime = plugin / 'runtimes' / 'gutenberg-converter-runtime'
+target_runtime = root / 'public' / 'downloads' / 'gutenberg-converter-runtime.zip'
+with ZipFile(target_runtime, 'w', ZIP_DEFLATED) as archive:
+    for path in sorted(runtime.rglob('*')):
+        if path.is_file() and not any(part.startswith('.') for part in path.relative_to(runtime).parts):
+            archive.write(path, path.relative_to(runtime.parent))
+
 print(target)
+print(target_runtime)
