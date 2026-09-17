@@ -1,0 +1,70 @@
+html, body.wcs-page, body.page-template-wcs-full-width {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.wcs-page .wcs-part {
+    display: contents;
+}
+
+.wcs-page .wcs-page-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+}
+
+/* Ensure converted Gutenberg and Elementor scope roots stretch edge-to-edge with zero outer margin */
+.gcb-scope, .ecb-scope, .wcs-page-content > .elementor, .wcs-page-content > .gcb-scope {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+}
+
+/* Reset theme layout containers, Gutenberg block wrappers, and entry content paddings */
+body.wcs-page .entry-content,
+body.wcs-page .site-main,
+body.wcs-page .is-layout-constrained,
+body.wcs-page .wp-site-blocks,
+body.wcs-page #page,
+body.wcs-page #content,
+body.wcs-page #primary,
+body.wcs-page #main,
+body.page-template-wcs-full-width .entry-content,
+body.page-template-wcs-full-width .site-main,
+body.page-template-wcs-full-width .is-layout-constrained,
+body.page-template-wcs-full-width .wp-site-blocks,
+body.page-template-wcs-full-width #page,
+body.page-template-wcs-full-width #content,
+body.page-template-wcs-full-width #primary,
+body.page-template-wcs-full-width #main {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+}
+
+/* Only the bridge shell is reset; explicit source section spacing is retained. */
+body.wcs-page > .wcs-header,
+body.wcs-page > .wcs-footer,
+body.wcs-page > .wcs-page-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0;
+}
+
+/* The body, rather than the short embedded header document, contains sticky motion. */
+body.wcs-page > .wcs-header.wcs-sticky-header {
+    display: block;
+    position: sticky;
+    top: var(--wcs-header-top, 0px);
+    z-index: var(--wcs-header-layer, auto);
+}
+
+body.wcs-page > .wcs-header.wcs-sticky-header .wcs-sticky-source {
+    position: relative !important;
+    top: auto !important;
+    bottom: auto !important;
+}

@@ -1,0 +1,22 @@
+{
+    "ok": true,
+    "wordpress": "7.1",
+    "elementor": "4.2.4",
+    "checks": [
+        "gutenberg global header created",
+        "gutenberg ordinary footer link resolves",
+        "gutenberg inside mode detaches global templates",
+        "gutenberg other pages shared header retained",
+        "gutenberg joined native content contains header and footer",
+        "gutenberg inside content links still resolve",
+        "gutenberg deployment retry idempotent",
+        "elementor global header created",
+        "elementor ordinary footer link resolves",
+        "elementor inside mode detaches global templates",
+        "elementor other pages shared header retained",
+        "elementor joined native content contains header and footer",
+        "elementor inside content links still resolve",
+        "elementor deployment retry idempotent",
+        "Anonymous requests denied"
+    ]
+}

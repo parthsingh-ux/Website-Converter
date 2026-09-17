@@ -1,0 +1,18 @@
+const test=require('node:test');const assert=require('node:assert/strict');
+const {convertSite,normalizeBundle}=require('../src/lib/conversion/site-bundle.cjs');
+const html='<html><head><style>body{margin:0}.wrap{padding:24px}nav a{color:red}</style></head><body><div class="wrap"><header><nav><ul><li><a href="index.html">Home</a><ul><li><a href="about.html">About</a></li></ul></li></ul></nav><script>window.headerReady=true;</script></header><main><h1>Hello</h1><table><tr><td>42</td></tr></table><form><input name="email"></form></main><footer><p>Copyright</p></footer></div></body></html>';
+for(const editor of ['gutenberg','elementor'])test(`${editor}: generic source separates shared parts, keeps wrappers and all content`,async()=>{
+ const b=await convertSite({html,editor,title:'Home',siteKey:'demo'});assert.equal(b.format,'wcs-site-bundle');assert.ok(b.parts.header);assert.ok(b.parts.footer);
+ const page=JSON.stringify(b.parts.page.content),header=JSON.stringify(b.parts.header.content),footer=JSON.stringify(b.parts.footer.content);
+ assert.match(page,/Hello/);assert.match(page,/42/);assert.match(page,/email/);assert.doesNotMatch(page,/Copyright/);assert.doesNotMatch(page,/data-wcs-menu/);assert.match(header,/data-wcs-menu/);assert.match(footer,/Copyright/);assert.match(page,/wrap/);
+ assert.deepEqual(b.menus[0].items.map(x=>x.parent),['0','1']);
+ const js=b.parts.page.ecb?.js??b.parts.page.patternJs;assert.match(js,/headerReady/);assert.equal(b.parts.header.ecb?.js??b.parts.header.patternJs,'');
+});
+test('does not mistake an article header for site chrome',async()=>{const b=await convertSite({html:'<main><article><header><h1>Article</h1></header></article></main>'});assert.equal(b.parts.header,null);assert.match(b.parts.page.content,/Article/);});
+test('ambiguous header fails until selector is supplied',async()=>{await assert.rejects(convertSite({html:'<header id="desktop">One</header><header id="mobile">Two</header><main>Body</main>'}),/Several header/);const b=await convertSite({html:'<header id="desktop">One</header><header id="mobile">Two</header><main>Body</main>',headerSelector:'#desktop'});assert.match(b.parts.page.content,/Two/);});
+test('shared parts can be disabled',async()=>{const b=await convertSite({html,sharedParts:false});assert.equal(b.parts.header,null);assert.equal(b.menus.length,0);assert.match(b.parts.page.content,/Copyright/);});
+test('folder source keeps import order and original path',async()=>{const b=await convertSite({editor:'elementor',files:{'pages/home.html':'<link rel="stylesheet" href="../style.css"><header>Brand</header><main>Page</main>','style.css':'main{padding:32px}'},entry:'pages/home.html'});assert.equal(b.sourcePath,'pages/home.html');assert.deepEqual(b.parts.page.ecb.unresolvedDependencies,[]);});
+test('legacy JSON remains deployable without pretending it has extracted parts',async()=>{const b=await convertSite({html});const legacy=normalizeBundle(b.parts.page,'gutenberg');assert.equal(legacy.sharedParts,false);assert.throws(()=>normalizeBundle(b.parts.page,'elementor'),/for this editor/);});
+test('invalid site keys and missing selectors are rejected',async()=>{await assert.rejects(convertSite({html,siteKey:'../bad'}),/Site key/);await assert.rejects(convertSite({html,footerSelector:'.missing'}),/did not match/);});
+
+test('relative menu paths resolve against the source page directory',async()=>{const b=await convertSite({html:'<header><nav><a href="about.html#team">About</a></nav></header><main>Home</main>',sourcePath:'pages/index.html'});assert.equal(b.menus[0].items[0].url,'pages/about.html#team');});

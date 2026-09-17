@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "wordpress.org/plugins",
+        "slug": "elementor"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "activatePlugin",
+      "pluginPath": "wordpress-converter-bridge/wordpress-converter-bridge.php"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require \"/wordpress/wp-load.php\"; require \"/tests/integration.php\";"
+    }
+  ]
+}
